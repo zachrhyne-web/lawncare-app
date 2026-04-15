@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"/c/Users/rhyne/AppData/Roaming/npm:$PATH\")",
+      "Bash(npm --version)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:/c/Program Files/nodejs/node_modules/npm/bin:$PATH\")",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:5173/)"
+    ]
+  }
+}
