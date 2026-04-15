@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, FileText, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, Settings, Leaf } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 
 const links = [
   { to: '/',          label: 'Dashboard', icon: LayoutDashboard },
@@ -9,20 +10,36 @@ const links = [
 ]
 
 export default function Navbar() {
+  const { settings } = useApp()
+  const { logoDataUrl, businessName } = settings
+
   return (
     <nav className="bg-forest shadow-lg sticky top-0 z-40 no-print">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-14">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full border border-lime/60 flex items-center justify-center">
-              <span className="text-lime text-sm">⛳</span>
-            </div>
-            <span className="font-display text-white text-2xl tracking-[0.2em] font-semibold">LAWNCARE PRO</span>
+        <div className="flex items-center justify-between h-16">
+
+          {/* Logo / Business name */}
+          <div className="flex items-center gap-3 min-w-0">
+            {logoDataUrl ? (
+              <img
+                src={logoDataUrl}
+                alt={businessName || 'Business logo'}
+                className="h-10 w-auto object-contain max-w-[160px]"
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-lime/20 flex items-center justify-center flex-shrink-0">
+                  <Leaf className="w-4 h-4 text-lime" />
+                </div>
+                <span className="font-display text-white text-xl tracking-widest leading-none truncate">
+                  {businessName || 'LAWNCARE PRO'}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Nav links */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {links.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
@@ -31,8 +48,8 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-lime text-forest'
-                      : 'text-cream/70 hover:text-cream hover:bg-white/10'
+                      ? 'bg-lime text-forest font-semibold'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`
                 }
               >

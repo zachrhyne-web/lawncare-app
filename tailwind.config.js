@@ -3,15 +3,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        forest: '#0B2618',
-        lime: '#B8922A',
+        // These reference CSS variables so the whole app re-themes when settings change
+        forest: ({ opacityValue }) =>
+          opacityValue !== undefined
+            ? `rgba(var(--color-forest-rgb), ${opacityValue})`
+            : `rgb(var(--color-forest-rgb))`,
+        lime: ({ opacityValue }) =>
+          opacityValue !== undefined
+            ? `rgba(var(--color-lime-rgb), ${opacityValue})`
+            : `rgb(var(--color-lime-rgb))`,
         cream: '#FFFFFF',
-        'cream-dark': '#E5E2DA',
-        bark: '#2D5A3D',
-        linen: '#F5F3EE',
+        'cream-dark': '#E0E0E0',
+        bark: '#3D8032',
+        linen: '#F5F5F5',
       },
       fontFamily: {
-        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        display: ['"Bebas Neue"', 'sans-serif'],
         body: ['"Inter"', 'sans-serif'],
       },
     },

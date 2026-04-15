@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Brand CSS variables — updated dynamically by AppContext when settings change ── */
+:root {
+  --color-forest-rgb: 27, 61, 27;    /* default #1B3D1B */
+  --color-lime-rgb:   232, 192, 0;   /* default #E8C000 */
+}
+
 @layer base {
   body {
     @apply bg-linen font-body text-gray-900 antialiased;

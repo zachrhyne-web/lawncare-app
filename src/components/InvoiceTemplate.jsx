@@ -1,6 +1,13 @@
 import { formatCurrency, formatDate } from '../utils/invoiceHelpers'
+import { useApp } from '../context/AppContext'
+
+const BRAND_GREEN  = '#1B3D1B'
+const BRAND_YELLOW = '#E8C000'
+const BRAND_LIGHT  = '#F5F5F5'
 
 export default function InvoiceTemplate({ invoice, forwardedRef }) {
+  const { settings } = useApp()
+  const logoDataUrl = settings.logoDataUrl || null
   const { businessInfo = {}, customerSnapshot = {}, lineItems = [] } = invoice
 
   return (
@@ -12,11 +19,18 @@ export default function InvoiceTemplate({ invoice, forwardedRef }) {
       {/* Header */}
       <div className="flex justify-between items-start mb-10">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span style={{ color: '#B8922A', fontSize: '28px' }}>✂</span>
-            <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '28px', color: '#0B2618', letterSpacing: '3px' }}>
-              {businessInfo.name || 'LAWNCARE PRO'}
-            </h1>
+          <div className="flex items-center gap-3 mb-2">
+            {logoDataUrl ? (
+              <img
+                src={logoDataUrl}
+                alt={businessInfo.name || 'Business logo'}
+                style={{ height: '60px', width: 'auto', objectFit: 'contain', maxWidth: '200px' }}
+              />
+            ) : (
+              <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '26px', color: BRAND_GREEN, letterSpacing: '3px', lineHeight: 1 }}>
+                {businessInfo.name || 'LAWNCARE PRO'}
+              </h1>
+            )}
           </div>
           {businessInfo.address && <p className="text-sm text-gray-500">{businessInfo.address}</p>}
           {businessInfo.phone   && <p className="text-sm text-gray-500">{businessInfo.phone}</p>}
@@ -24,17 +38,17 @@ export default function InvoiceTemplate({ invoice, forwardedRef }) {
         </div>
 
         <div className="text-right">
-          <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '42px', color: '#0B2618', letterSpacing: '2px' }}>
+          <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '48px', color: BRAND_GREEN, letterSpacing: '3px', lineHeight: 1 }}>
             INVOICE
           </div>
-          <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '20px', color: '#B8922A' }}>
+          <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '22px', color: BRAND_YELLOW, letterSpacing: '1px' }}>
             {invoice.invoiceNumber}
           </p>
         </div>
       </div>
 
       {/* Meta row */}
-      <div className="flex gap-12 mb-10 p-6 rounded-2xl" style={{ backgroundColor: '#F5F3EE' }}>
+      <div className="flex gap-12 mb-10 p-6 rounded-2xl" style={{ backgroundColor: BRAND_LIGHT }}>
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">Bill To</p>
           <p className="font-semibold text-gray-900">{customerSnapshot.name}</p>
@@ -52,7 +66,9 @@ export default function InvoiceTemplate({ invoice, forwardedRef }) {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">Status</p>
-          <p className="text-sm font-semibold capitalize" style={{ color: invoice.status === 'paid' ? '#B8922A' : invoice.status === 'sent' ? '#3b82f6' : '#6b7280' }}>
+          <p className="text-sm font-semibold capitalize" style={{
+            color: invoice.status === 'paid' ? '#166534' : invoice.status === 'sent' ? '#1d4ed8' : '#6b7280'
+          }}>
             {invoice.status}
           </p>
         </div>
@@ -61,7 +77,7 @@ export default function InvoiceTemplate({ invoice, forwardedRef }) {
       {/* Line items table */}
       <table className="w-full mb-8 text-sm">
         <thead>
-          <tr style={{ backgroundColor: '#0B2618', color: '#F5F3EE' }}>
+          <tr style={{ backgroundColor: BRAND_GREEN, color: '#FFFFFF' }}>
             <th className="text-left py-3 px-4 rounded-tl-xl" style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '1px' }}>Description</th>
             <th className="text-center py-3 px-4" style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '1px' }}>Qty</th>
             <th className="text-right py-3 px-4" style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '1px' }}>Unit Price</th>
@@ -94,8 +110,8 @@ export default function InvoiceTemplate({ invoice, forwardedRef }) {
             </div>
           )}
           <div className="flex justify-between py-3 text-base font-bold">
-            <span style={{ color: '#0B2618' }}>Total Due</span>
-            <span style={{ color: '#0B2618', fontSize: '18px' }}>{formatCurrency(invoice.total)}</span>
+            <span style={{ color: BRAND_GREEN }}>Total Due</span>
+            <span style={{ color: BRAND_GREEN, fontSize: '18px' }}>{formatCurrency(invoice.total)}</span>
           </div>
         </div>
       </div>
@@ -110,7 +126,7 @@ export default function InvoiceTemplate({ invoice, forwardedRef }) {
 
       {/* Footer */}
       <div className="mt-10 pt-4 border-t border-gray-100 text-center text-xs text-gray-400">
-        Thank you for choosing {businessInfo.name || 'LawnCare Pro'}!
+        Thank you for choosing {businessInfo.name || 'Hanson Turf Lawn Service'} · {businessInfo.phone || '405-956-6668'}
       </div>
     </div>
   )

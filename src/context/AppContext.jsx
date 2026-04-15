@@ -1,5 +1,4 @@
-// context/AppContext.jsx
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { v4 as uuid } from 'uuid'
 import {
   getAll, saveAll, upsert, remove,
@@ -7,7 +6,22 @@ import {
   hasSeedData, markSeeded,
 } from '../utils/storage'
 
-// ── Seed data ─────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const hexToRgb = (hex) => {
+  if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return null
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `${r}, ${g}, ${b}`
+}
+
+export const applyTheme = (settings) => {
+  const root = document.documentElement
+  root.style.setProperty('--color-forest-rgb', hexToRgb(settings.primaryColor) || '27, 61, 27')
+  root.style.setProperty('--color-lime-rgb',   hexToRgb(settings.accentColor)  || '232, 192, 0')
+}
+
+// ── Seed data ──────────────────────────────────────────────────────────────────
 const SEED_CUSTOMERS = [
   {
     id: 'seed-cust-1',
@@ -18,16 +32,8 @@ const SEED_CUSTOMERS = [
     notes: 'Gate code is #4820. Dog in backyard — please call ahead.',
     createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
     services: { mow: true, weedeat: true, edge: true, blowing: false },
-    equipment: {
-      mowerModel: 'Honda HRX217',
-      type: 'push',
-      deckWidth: '21 inches',
-      cutHeight: '3 inches',
-    },
-    jobDetails: {
-      estimatedTime: '45 minutes',
-      servicePrices: { mow: 45, weedeat: 15, edge: 10, blowing: 0 },
-    },
+    equipment: { mowerModel: 'Honda HRX217', type: 'push', deckWidth: '21 inches', cutHeight: '3 inches' },
+    jobDetails: { estimatedTime: '45 minutes', servicePrices: { mow: 45, weedeat: 15, edge: 10, blowing: 0 } },
     photos: [],
   },
   {
@@ -39,16 +45,8 @@ const SEED_CUSTOMERS = [
     notes: 'Large corner lot. Uses riding mower path.',
     createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
     services: { mow: true, weedeat: true, edge: false, blowing: true },
-    equipment: {
-      mowerModel: 'John Deere E130',
-      type: 'riding',
-      deckWidth: '42 inches',
-      cutHeight: '3.5 inches',
-    },
-    jobDetails: {
-      estimatedTime: '1.5 hours',
-      servicePrices: { mow: 75, weedeat: 20, edge: 0, blowing: 15 },
-    },
+    equipment: { mowerModel: 'John Deere E130', type: 'riding', deckWidth: '42 inches', cutHeight: '3.5 inches' },
+    jobDetails: { estimatedTime: '1.5 hours', servicePrices: { mow: 75, weedeat: 20, edge: 0, blowing: 15 } },
     photos: [],
   },
 ]
@@ -58,43 +56,38 @@ const SEED_INVOICES = [
     id: 'seed-inv-1',
     invoiceNumber: 'INV-0001',
     customerId: 'seed-cust-1',
-    customerSnapshot: {
-      name: 'John & Mary Smith',
-      address: '1234 Maple Ave, Oklahoma City, OK 73101',
-      phone: '(405) 555-0101',
-      email: 'jsmith@example.com',
-    },
+    customerSnapshot: { name: 'John & Mary Smith', address: '1234 Maple Ave, Oklahoma City, OK 73101', phone: '(405) 555-0101', email: 'jsmith@example.com' },
     date: new Date(Date.now() - 5 * 86400000).toISOString(),
     dueDate: new Date(Date.now() + 25 * 86400000).toISOString(),
     status: 'paid',
     lineItems: [
-      { id: '1', description: 'Lawn Mowing', quantity: 1, unitPrice: 45, total: 45 },
-      { id: '2', description: 'Weed Eating', quantity: 1, unitPrice: 15, total: 15 },
-      { id: '3', description: 'Edging', quantity: 1, unitPrice: 10, total: 10 },
+      { id: '1', description: 'Lawn Mowing',  quantity: 1, unitPrice: 45, total: 45 },
+      { id: '2', description: 'Weed Eating',  quantity: 1, unitPrice: 15, total: 15 },
+      { id: '3', description: 'Edging',       quantity: 1, unitPrice: 10, total: 10 },
     ],
-    subtotal: 70,
-    taxRate: 0,
-    taxAmount: 0,
-    total: 70,
+    subtotal: 70, taxRate: 0, taxAmount: 0, total: 70,
     notes: 'Thank you for your business!',
-    businessInfo: { name: 'LawnCare Pro', phone: '', email: '', address: '' },
+    businessInfo: { name: '', phone: '', email: '', address: '' },
   },
 ]
-// ─────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────────
 
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
-  // Seed on first mount
+  // Seed demo data on very first load
   if (!hasSeedData()) {
     saveAll('customers', SEED_CUSTOMERS)
-    saveAll('invoices', SEED_INVOICES)
+    saveAll('invoices',  SEED_INVOICES)
     markSeeded()
   }
 
   const [customers, setCustomers] = useState(() => getAll('customers'))
-  const [invoices, setInvoices] = useState(() => getAll('invoices'))
-  const [settings, setSettings] = useState(() => getSettings())
+  const [invoices,  setInvoices]  = useState(() => getAll('invoices'))
+  const [settings,  setSettings]  = useState(() => getSettings())
+
+  // Apply brand theme on mount and whenever settings change
+  useEffect(() => { applyTheme(settings) }, [settings])
 
   // ── Customers ──────────────────────────────────────────────────────────────
   const addCustomer = useCallback((data) => {
@@ -135,17 +128,16 @@ export function AppProvider({ children }) {
   // ── Settings ───────────────────────────────────────────────────────────────
   const saveSettings = useCallback((s) => {
     persistSettings(s)
+    applyTheme(s)
     setSettings(s)
   }, [])
 
   return (
-    <AppContext.Provider
-      value={{
-        customers, addCustomer, updateCustomer, deleteCustomer,
-        invoices, addInvoice, updateInvoice, deleteInvoice,
-        settings, saveSettings,
-      }}
-    >
+    <AppContext.Provider value={{
+      customers, addCustomer, updateCustomer, deleteCustomer,
+      invoices,  addInvoice,  updateInvoice,  deleteInvoice,
+      settings,  saveSettings,
+    }}>
       {children}
     </AppContext.Provider>
   )
