@@ -21,7 +21,7 @@ const PRESET_ACCENTS = [
 ]
 
 export default function Settings() {
-  const { settings, saveSettings } = useApp()
+  const { settings, saveSettings, uploadBrandLogo } = useApp()
   const [form, setForm]   = useState({ ...settings })
   const [saved, setSaved] = useState(false)
   const logoRef = useRef(null)
@@ -33,18 +33,25 @@ export default function Settings() {
     applyTheme({ ...form, [field]: hex })
   }
 
-  const handleLogoUpload = (file) => {
+  const handleLogoUpload = async (file) => {
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (e) => set('logoDataUrl', e.target.result)
-    reader.readAsDataURL(file)
+    try {
+      const url = await uploadBrandLogo(file)
+      set('logoDataUrl', url)
+    } catch (err) {
+      alert(`Could not upload logo: ${err.message || err}`)
+    }
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
-    saveSettings({ ...form, taxRate: Number(form.taxRate), nextInvoiceNumber: Number(form.nextInvoiceNumber), isSetupComplete: true })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    try {
+      await saveSettings({ ...form, taxRate: Number(form.taxRate), nextInvoiceNumber: Number(form.nextInvoiceNumber), isSetupComplete: true })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      alert(`Could not save: ${err.message || err}`)
+    }
   }
 
   const SectionHeader = ({ icon: Icon, title, subtitle }) => (

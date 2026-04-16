@@ -1,12 +1,15 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { v4 as uuid } from 'uuid'
+import { useAuth } from './AuthContext'
 import {
-  getAll, saveAll, upsert, remove,
-  getSettings, saveSettings as persistSettings,
-  hasSeedData, markSeeded,
-} from '../utils/storage'
+  fetchProfile, saveProfile,
+  fetchCustomers, createCustomer, updateCustomerRow, deleteCustomerRow,
+  fetchInvoices, createInvoice, updateInvoiceRow, deleteInvoiceRow,
+  uploadCustomerPhoto, deleteCustomerPhoto,
+  nextInvoiceNumber as dbNextInvoiceNumber,
+  uploadLogo,
+} from '../lib/db'
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Theme helpers ────────────────────────────────────────────────────────────
 const hexToRgb = (hex) => {
   if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return null
   const r = parseInt(hex.slice(1, 3), 16)
@@ -17,126 +20,129 @@ const hexToRgb = (hex) => {
 
 export const applyTheme = (settings) => {
   const root = document.documentElement
-  root.style.setProperty('--color-forest-rgb', hexToRgb(settings.primaryColor) || '27, 61, 27')
-  root.style.setProperty('--color-lime-rgb',   hexToRgb(settings.accentColor)  || '232, 192, 0')
+  root.style.setProperty('--color-forest-rgb', hexToRgb(settings?.primaryColor) || '27, 61, 27')
+  root.style.setProperty('--color-lime-rgb',   hexToRgb(settings?.accentColor)  || '232, 192, 0')
 }
 
-// ── Seed data ──────────────────────────────────────────────────────────────────
-const SEED_CUSTOMERS = [
-  {
-    id: 'seed-cust-1',
-    name: 'John & Mary Smith',
-    phone: '(405) 555-0101',
-    email: 'jsmith@example.com',
-    address: '1234 Maple Ave, Oklahoma City, OK 73101',
-    notes: 'Gate code is #4820. Dog in backyard — please call ahead.',
-    createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
-    services: { mow: true, weedeat: true, edge: true, blowing: false },
-    equipment: { mowerModel: 'Honda HRX217', type: 'push', deckWidth: '21 inches', cutHeight: '3 inches' },
-    jobDetails: { estimatedTime: '45 minutes', servicePrices: { mow: 45, weedeat: 15, edge: 10, blowing: 0 } },
-    photos: [],
-  },
-  {
-    id: 'seed-cust-2',
-    name: 'Robert Garcia',
-    phone: '(405) 555-0182',
-    email: 'rgarcia@example.com',
-    address: '5678 Oak Street, Edmond, OK 73034',
-    notes: 'Large corner lot. Uses riding mower path.',
-    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    services: { mow: true, weedeat: true, edge: false, blowing: true },
-    equipment: { mowerModel: 'John Deere E130', type: 'riding', deckWidth: '42 inches', cutHeight: '3.5 inches' },
-    jobDetails: { estimatedTime: '1.5 hours', servicePrices: { mow: 75, weedeat: 20, edge: 0, blowing: 15 } },
-    photos: [],
-  },
-]
-
-const SEED_INVOICES = [
-  {
-    id: 'seed-inv-1',
-    invoiceNumber: 'INV-0001',
-    customerId: 'seed-cust-1',
-    customerSnapshot: { name: 'John & Mary Smith', address: '1234 Maple Ave, Oklahoma City, OK 73101', phone: '(405) 555-0101', email: 'jsmith@example.com' },
-    date: new Date(Date.now() - 5 * 86400000).toISOString(),
-    dueDate: new Date(Date.now() + 25 * 86400000).toISOString(),
-    status: 'paid',
-    lineItems: [
-      { id: '1', description: 'Lawn Mowing',  quantity: 1, unitPrice: 45, total: 45 },
-      { id: '2', description: 'Weed Eating',  quantity: 1, unitPrice: 15, total: 15 },
-      { id: '3', description: 'Edging',       quantity: 1, unitPrice: 10, total: 10 },
-    ],
-    subtotal: 70, taxRate: 0, taxAmount: 0, total: 70,
-    notes: 'Thank you for your business!',
-    businessInfo: { name: '', phone: '', email: '', address: '' },
-  },
-]
-// ──────────────────────────────────────────────────────────────────────────────
+const DEFAULT_SETTINGS = {
+  businessName: '', ownerName: '', phone: '', email: '', address: '', tagline: '',
+  logoDataUrl: null, primaryColor: '#1B3D1B', accentColor: '#E8C000',
+  taxRate: 0, invoicePrefix: 'INV', nextInvoiceNumber: 1,
+  isSetupComplete: false,
+}
 
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
-  // Seed demo data on very first load
-  if (!hasSeedData()) {
-    saveAll('customers', SEED_CUSTOMERS)
-    saveAll('invoices',  SEED_INVOICES)
-    markSeeded()
-  }
+  const { user } = useAuth()
+  const userId = user?.id
 
-  const [customers, setCustomers] = useState(() => getAll('customers'))
-  const [invoices,  setInvoices]  = useState(() => getAll('invoices'))
-  const [settings,  setSettings]  = useState(() => getSettings())
+  const [customers, setCustomers] = useState([])
+  const [invoices,  setInvoices]  = useState([])
+  const [settings,  setSettings]  = useState(DEFAULT_SETTINGS)
+  const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState(null)
 
-  // Apply brand theme on mount and whenever settings change
+  // Load all data when user signs in; clear on sign out
+  useEffect(() => {
+    let cancelled = false
+    if (!userId) {
+      setCustomers([]); setInvoices([]); setSettings(DEFAULT_SETTINGS); setLoading(false)
+      return
+    }
+    setLoading(true); setError(null)
+    Promise.all([fetchProfile(userId), fetchCustomers(userId), fetchInvoices(userId)])
+      .then(([profile, cust, inv]) => {
+        if (cancelled) return
+        setSettings({ ...DEFAULT_SETTINGS, ...profile })
+        setCustomers(cust)
+        setInvoices(inv)
+      })
+      .catch((e) => { if (!cancelled) setError(e.message || String(e)) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [userId])
+
   useEffect(() => { applyTheme(settings) }, [settings])
 
   // ── Customers ──────────────────────────────────────────────────────────────
-  const addCustomer = useCallback((data) => {
-    const customer = { id: uuid(), createdAt: new Date().toISOString(), photos: [], ...data }
-    upsert('customers', customer)
-    setCustomers(getAll('customers'))
-    return customer
+  const addCustomer = useCallback(async (data) => {
+    const created = await createCustomer(userId, data)
+    setCustomers(prev => [created, ...prev])
+    return created
+  }, [userId])
+
+  const updateCustomer = useCallback(async (customer) => {
+    const updated = await updateCustomerRow(userId, customer)
+    setCustomers(prev => prev.map(c => c.id === updated.id ? { ...updated, photos: customer.photos || c.photos } : c))
+    return updated
+  }, [userId])
+
+  const deleteCustomer = useCallback(async (id) => {
+    await deleteCustomerRow(id)
+    setCustomers(prev => prev.filter(c => c.id !== id))
   }, [])
 
-  const updateCustomer = useCallback((customer) => {
-    upsert('customers', customer)
-    setCustomers(getAll('customers'))
-  }, [])
+  const addCustomerPhoto = useCallback(async (customerId, label, file) => {
+    const photo = await uploadCustomerPhoto(userId, customerId, label, file)
+    setCustomers(prev => prev.map(c =>
+      c.id === customerId ? { ...c, photos: [...(c.photos || []), photo] } : c
+    ))
+    return photo
+  }, [userId])
 
-  const deleteCustomer = useCallback((id) => {
-    remove('customers', id)
-    setCustomers(getAll('customers'))
+  const removeCustomerPhoto = useCallback(async (customerId, photo) => {
+    await deleteCustomerPhoto(photo)
+    setCustomers(prev => prev.map(c =>
+      c.id === customerId ? { ...c, photos: (c.photos || []).filter(p => p.id !== photo.id) } : c
+    ))
   }, [])
 
   // ── Invoices ───────────────────────────────────────────────────────────────
-  const addInvoice = useCallback((data) => {
-    const invoice = { id: uuid(), ...data }
-    upsert('invoices', invoice)
-    setInvoices(getAll('invoices'))
-    return invoice
+  const addInvoice = useCallback(async (data) => {
+    const created = await createInvoice(userId, data)
+    setInvoices(prev => [created, ...prev])
+    return created
+  }, [userId])
+
+  const updateInvoice = useCallback(async (invoice) => {
+    const updated = await updateInvoiceRow(userId, invoice)
+    setInvoices(prev => prev.map(i => i.id === updated.id ? updated : i))
+    return updated
+  }, [userId])
+
+  const deleteInvoice = useCallback(async (id) => {
+    await deleteInvoiceRow(id)
+    setInvoices(prev => prev.filter(i => i.id !== id))
   }, [])
 
-  const updateInvoice = useCallback((invoice) => {
-    upsert('invoices', invoice)
-    setInvoices(getAll('invoices'))
-  }, [])
-
-  const deleteInvoice = useCallback((id) => {
-    remove('invoices', id)
-    setInvoices(getAll('invoices'))
-  }, [])
+  const getNextInvoiceNumber = useCallback(async () => {
+    const num = await dbNextInvoiceNumber(userId)
+    setSettings(prev => ({ ...prev, nextInvoiceNumber: (prev.nextInvoiceNumber || 1) + 1 }))
+    return num
+  }, [userId])
 
   // ── Settings ───────────────────────────────────────────────────────────────
-  const saveSettings = useCallback((s) => {
-    persistSettings(s)
-    applyTheme(s)
-    setSettings(s)
-  }, [])
+  const saveSettings = useCallback(async (s) => {
+    const saved = await saveProfile(userId, s)
+    const merged = { ...DEFAULT_SETTINGS, ...saved }
+    setSettings(merged)
+    applyTheme(merged)
+    return merged
+  }, [userId])
+
+  const uploadBrandLogo = useCallback(async (file) => {
+    const url = await uploadLogo(userId, file)
+    return url
+  }, [userId])
 
   return (
     <AppContext.Provider value={{
+      loading, error,
       customers, addCustomer, updateCustomer, deleteCustomer,
-      invoices,  addInvoice,  updateInvoice,  deleteInvoice,
-      settings,  saveSettings,
+      addCustomerPhoto, removeCustomerPhoto,
+      invoices,  addInvoice,  updateInvoice,  deleteInvoice, getNextInvoiceNumber,
+      settings,  saveSettings, uploadBrandLogo,
     }}>
       {children}
     </AppContext.Provider>

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider, useApp } from './context/AppContext'
 import Navbar from './components/Navbar'
 import Dashboard from './pages/Dashboard'
@@ -10,14 +11,25 @@ import NewInvoice from './pages/NewInvoice'
 import InvoiceDetail from './pages/InvoiceDetail'
 import Settings from './pages/Settings'
 import SetupWizard from './pages/SetupWizard'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import NotConfigured from './pages/NotConfigured'
 
-function AppShell() {
-  const { settings } = useApp()
+function LoadingScreen({ label = 'Loading…' }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-linen">
+      <p className="text-sm text-gray-400">{label}</p>
+    </div>
+  )
+}
 
-  // Show the setup wizard for brand-new installs (isSetupComplete is exactly false)
-  if (settings.isSetupComplete === false) {
-    return <SetupWizard />
-  }
+function AuthedApp() {
+  const { loading, error, settings } = useApp()
+
+  if (loading) return <LoadingScreen label="Loading your portal…" />
+  if (error)   return <LoadingScreen label={`Error: ${error}`} />
+
+  if (settings.isSetupComplete === false) return <SetupWizard />
 
   return (
     <div className="min-h-screen bg-linen">
@@ -32,18 +44,42 @@ function AppShell() {
           <Route path="/invoices/new"  element={<NewInvoice />} />
           <Route path="/invoices/:id"  element={<InvoiceDetail />} />
           <Route path="/settings"      element={<Settings />} />
+          <Route path="*"              element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>
   )
 }
 
+function AppShell() {
+  const { isConfigured, session, loading } = useAuth()
+
+  if (!isConfigured) return <NotConfigured />
+  if (loading) return <LoadingScreen />
+
+  if (!session) {
+    return (
+      <Routes>
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/login"  element={<Login />} />
+        <Route path="*"       element={<Login />} />
+      </Routes>
+    )
+  }
+
+  return (
+    <AppProvider>
+      <AuthedApp />
+    </AppProvider>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <AppProvider>
+      <AuthProvider>
         <AppShell />
-      </AppProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

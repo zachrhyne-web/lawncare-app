@@ -28,7 +28,8 @@ const PRESET_ACCENTS = [
 ]
 
 export default function SetupWizard() {
-  const { saveSettings, settings } = useApp()
+  const { saveSettings, uploadBrandLogo, settings } = useApp()
+  const [busy, setBusy] = useState(false)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
     businessName:  '',
@@ -46,11 +47,14 @@ export default function SetupWizard() {
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
-  const handleLogoUpload = (file) => {
+  const handleLogoUpload = async (file) => {
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (e) => set('logoDataUrl', e.target.result)
-    reader.readAsDataURL(file)
+    try {
+      const url = await uploadBrandLogo(file)
+      set('logoDataUrl', url)
+    } catch (err) {
+      alert(`Could not upload logo: ${err.message || err}`)
+    }
   }
 
   const handleColorChange = (field, hex) => {
@@ -77,15 +81,21 @@ export default function SetupWizard() {
     setStep(s => s + 1)
   }
 
-  const handleFinish = () => {
-    saveSettings({
-      ...settings,
-      ...form,
-      taxRate:           settings.taxRate           || 0,
-      invoicePrefix:     settings.invoicePrefix      || 'INV',
-      nextInvoiceNumber: settings.nextInvoiceNumber  || 1,
-      isSetupComplete:   true,
-    })
+  const handleFinish = async () => {
+    setBusy(true)
+    try {
+      await saveSettings({
+        ...settings,
+        ...form,
+        taxRate:           settings.taxRate           || 0,
+        invoicePrefix:     settings.invoicePrefix      || 'INV',
+        nextInvoiceNumber: settings.nextInvoiceNumber  || 1,
+        isSetupComplete:   true,
+      })
+    } catch (err) {
+      alert(`Could not save: ${err.message || err}`)
+      setBusy(false)
+    }
   }
 
   // ── Step renderers ──────────────────────────────────────────────────────────
@@ -380,9 +390,9 @@ export default function SetupWizard() {
               {step === 2 ? 'Looks great!' : 'Continue'} <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button type="button" onClick={handleFinish}
+            <button type="button" onClick={handleFinish} disabled={busy}
               className="btn-accent ml-auto text-base px-6">
-              <CheckCircle className="w-5 h-5" /> Launch My Portal
+              <CheckCircle className="w-5 h-5" /> {busy ? 'Launching…' : 'Launch My Portal'}
             </button>
           )}
         </div>

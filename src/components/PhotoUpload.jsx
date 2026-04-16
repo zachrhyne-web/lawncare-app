@@ -1,23 +1,13 @@
 import { useRef } from 'react'
-import { v4 as uuid } from 'uuid'
 import { Camera, Trash2, Upload } from 'lucide-react'
 
 export default function PhotoUpload({ photos = [], onAdd, onDelete }) {
   const beforeRef = useRef(null)
   const afterRef  = useRef(null)
 
-  const handleFile = (label, file) => {
+  const handleFile = async (label, file) => {
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      onAdd({
-        id: uuid(),
-        label,
-        dataUrl: e.target.result,
-        uploadedAt: new Date().toISOString(),
-      })
-    }
-    reader.readAsDataURL(file)
+    await onAdd(label, file)
   }
 
   const beforePhotos = photos.filter(p => p.label === 'before')
@@ -59,13 +49,13 @@ export default function PhotoUpload({ photos = [], onAdd, onDelete }) {
           {items.map(photo => (
             <div key={photo.id} className="relative group rounded-xl overflow-hidden bg-gray-100">
               <img
-                src={photo.dataUrl}
+                src={photo.publicUrl || photo.dataUrl}
                 alt={`${label} photo`}
                 className="w-full h-28 object-cover"
               />
               <button
                 type="button"
-                onClick={() => onDelete(photo.id)}
+                onClick={() => onDelete(photo)}
                 className="absolute top-1 right-1 p-1 bg-black/60 rounded-lg text-white
                            opacity-0 group-hover:opacity-100 transition-opacity"
               >

@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, FileText, Settings, Leaf } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, Settings, Leaf, LogOut } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 
 const links = [
   { to: '/',          label: 'Dashboard', icon: LayoutDashboard },
@@ -11,6 +12,7 @@ const links = [
 
 export default function Navbar() {
   const { settings } = useApp()
+  const { signOut, isConfigured } = useAuth()
   const { logoDataUrl, businessName } = settings
 
   return (
@@ -57,6 +59,15 @@ export default function Navbar() {
                 <span className="hidden sm:inline">{label}</span>
               </NavLink>
             ))}
+            {isConfigured && (
+              <button
+                onClick={signOut}
+                title="Sign out"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>

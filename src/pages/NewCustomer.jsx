@@ -44,11 +44,15 @@ export default function NewCustomer() {
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
-    const customer = addCustomer(form)
-    navigate(`/customers/${customer.id}`)
+    try {
+      const customer = await addCustomer(form)
+      navigate(`/customers/${customer.id}`)
+    } catch (err) {
+      alert(`Could not save customer: ${err.message || err}`)
+    }
   }
 
   const SectionHeader = ({ icon: Icon, title }) => (

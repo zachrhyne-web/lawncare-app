@@ -12,7 +12,7 @@ import { formatCurrency, formatShortDate } from '../utils/invoiceHelpers'
 export default function CustomerDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { customers, updateCustomer, deleteCustomer, invoices } = useApp()
+  const { customers, updateCustomer, deleteCustomer, addCustomerPhoto, removeCustomerPhoto, invoices } = useApp()
 
   const customer = customers.find(c => c.id === id)
   const [editing, setEditing] = useState(false)
@@ -63,15 +63,15 @@ export default function CustomerDetail() {
     navigate('/customers')
   }
 
-  // Photo handlers
-  const handleAddPhoto = (photo) => {
-    const updated = { ...customer, photos: [...(customer.photos || []), photo] }
-    updateCustomer(updated)
+  // Photo handlers (upload to Supabase Storage)
+  const handleAddPhoto = async (label, file) => {
+    try { await addCustomerPhoto(id, label, file) }
+    catch (err) { alert(`Could not upload photo: ${err.message || err}`) }
   }
 
-  const handleDeletePhoto = (photoId) => {
-    const updated = { ...customer, photos: (customer.photos || []).filter(p => p.id !== photoId) }
-    updateCustomer(updated)
+  const handleDeletePhoto = async (photo) => {
+    try { await removeCustomerPhoto(id, photo) }
+    catch (err) { alert(`Could not delete photo: ${err.message || err}`) }
   }
 
   const data = editing ? form : customer

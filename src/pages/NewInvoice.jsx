@@ -8,14 +8,13 @@ import {
   calcLineItemTotal, calcInvoiceTotals, buildLineItemsFromCustomer,
   formatCurrency, addDays
 } from '../utils/invoiceHelpers'
-import { getNextInvoiceNumber } from '../utils/storage'
 
 const emptyLineItem = () => ({
   id: uuid(), description: '', quantity: 1, unitPrice: 0, total: 0,
 })
 
 export default function NewInvoice() {
-  const { customers, addInvoice, settings } = useApp()
+  const { customers, addInvoice, getNextInvoiceNumber, settings } = useApp()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const preselectedCustomerId = searchParams.get('customerId')
@@ -56,11 +55,12 @@ export default function NewInvoice() {
 
   const { subtotal, taxAmount, total } = calcInvoiceTotals(lineItems, taxRate)
 
-  const saveInvoice = (status) => {
+  const saveInvoice = async (status) => {
     if (!customerId) { alert('Please select a customer.'); return }
     setSaving(true)
 
-    const invoiceNumber = getNextInvoiceNumber()
+    try {
+    const invoiceNumber = await getNextInvoiceNumber()
     const invoice = {
       invoiceNumber,
       customerId,
@@ -87,8 +87,12 @@ export default function NewInvoice() {
       },
     }
 
-    const saved = addInvoice(invoice)
+    const saved = await addInvoice(invoice)
     navigate(`/invoices/${saved.id}`)
+    } catch (err) {
+      alert(`Could not save invoice: ${err.message || err}`)
+      setSaving(false)
+    }
   }
 
   return (
