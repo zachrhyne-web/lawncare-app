@@ -10,6 +10,7 @@ const FILTERS = [
   { key: 'weedeat', label: 'Weed Eat' },
   { key: 'edge',    label: 'Edge' },
   { key: 'blowing', label: 'Blowing' },
+  { key: 'hedge',   label: 'Hedge' },
 ]
 
 export default function Customers() {

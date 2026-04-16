@@ -37,6 +37,7 @@ export const buildLineItemsFromCustomer = (customer) => {
     weedeat:  'Weed Eating',
     edge:     'Edging',
     blowing:  'Leaf/Grass Blowing',
+    hedge:    'Hedge Trimming',
   }
   const items = []
   for (const [key, label] of Object.entries(serviceMap)) {

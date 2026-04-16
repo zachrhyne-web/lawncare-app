@@ -1,7 +1,8 @@
 // pages/Settings.jsx — full rewrite with branding studio
 import { useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp, applyTheme } from '../context/AppContext'
-import { Save, Building2, Receipt, CheckCircle, Palette, Image, Upload, X, Leaf } from 'lucide-react'
+import { Save, Building2, Receipt, CheckCircle, Palette, Image, Upload, X, Leaf, UserCog, ChevronRight } from 'lucide-react'
 
 const PRESET_PRIMARIES = [
   { hex: '#1B3D1B', name: 'Forest Green' },
@@ -245,6 +246,20 @@ export default function Settings() {
             </p>
           </div>
         </div>
+
+        {/* ── Account ─────────────────────────────────────────────────── */}
+        <Link to="/account" className="card flex items-center justify-between hover:border-forest transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-forest/10 flex items-center justify-center">
+              <UserCog className="w-4 h-4 text-forest" />
+            </div>
+            <div>
+              <p className="font-display tracking-wide text-forest">Account & Login</p>
+              <p className="text-xs text-gray-400">Change your email, password, or sign out.</p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-300" />
+        </Link>
 
         <div className="flex gap-3 justify-end pb-6">
           <button type="submit" className="btn-primary px-6">

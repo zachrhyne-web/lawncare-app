@@ -98,9 +98,9 @@ export default function SetupWizard() {
     }
   }
 
-  // ── Step renderers ──────────────────────────────────────────────────────────
-
-  const StepBusiness = () => (
+  // ── Step renderers (plain JSX, NOT components — inline components would
+  //    be recreated on every render and inputs would lose focus per keystroke)
+  const stepBusiness = (
     <div className="space-y-4">
       <div>
         <label className="label">Business Name *</label>
@@ -143,7 +143,7 @@ export default function SetupWizard() {
     </div>
   )
 
-  const StepLogo = () => (
+  const stepLogo = (
     <div className="space-y-6">
       <div>
         <label className="label">Upload Your Logo</label>
@@ -194,7 +194,7 @@ export default function SetupWizard() {
     </div>
   )
 
-  const StepColors = () => (
+  const stepColors = (
     <div className="space-y-6">
       <p className="text-sm text-gray-500">
         Pick colors that match your brand. Changes are previewed live on this page.
@@ -279,7 +279,7 @@ export default function SetupWizard() {
     </div>
   )
 
-  const StepDone = () => (
+  const stepDone = (
     <div className="text-center py-4 space-y-6">
       {form.logoDataUrl ? (
         <div className="w-32 h-32 mx-auto bg-gray-50 rounded-2xl border border-cream-dark flex items-center justify-center p-3">
@@ -319,7 +319,7 @@ export default function SetupWizard() {
     </div>
   )
 
-  const stepContent = [<StepBusiness />, <StepLogo />, <StepColors />, <StepDone />]
+  const stepContent = [stepBusiness, stepLogo, stepColors, stepDone]
   const stepTitles  = [
     'Set up your business',
     'Add your logo',

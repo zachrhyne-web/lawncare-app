@@ -228,6 +228,54 @@ export async function deleteCustomerPhoto(photo) {
   if (error) throw error
 }
 
+// ── Expenses ─────────────────────────────────────────────────────────────────
+const expenseFromRow = (r) => r && ({
+  id: r.id,
+  date: r.date,
+  category: r.category || '',
+  vendor: r.vendor || '',
+  amount: Number(r.amount || 0),
+  description: r.description || '',
+  notes: r.notes || '',
+  createdAt: r.created_at,
+})
+
+const expenseToRow = (e, userId) => ({
+  user_id: userId,
+  date: e.date,
+  category: e.category || null,
+  vendor: e.vendor || null,
+  amount: Number(e.amount || 0),
+  description: e.description || null,
+  notes: e.notes || null,
+})
+
+export async function fetchExpenses(userId) {
+  const { data, error } = await supabase
+    .from('expenses').select('*').eq('user_id', userId).order('date', { ascending: false })
+  if (error) throw error
+  return data.map(expenseFromRow)
+}
+
+export async function createExpense(userId, data) {
+  const { data: row, error } = await supabase
+    .from('expenses').insert(expenseToRow(data, userId)).select().single()
+  if (error) throw error
+  return expenseFromRow(row)
+}
+
+export async function updateExpenseRow(userId, expense) {
+  const { data: row, error } = await supabase
+    .from('expenses').update(expenseToRow(expense, userId)).eq('id', expense.id).select().single()
+  if (error) throw error
+  return expenseFromRow(row)
+}
+
+export async function deleteExpenseRow(id) {
+  const { error } = await supabase.from('expenses').delete().eq('id', id)
+  if (error) throw error
+}
+
 // Atomically consume & increment the invoice counter on the profile
 export async function nextInvoiceNumber(userId) {
   const { data: prof, error } = await supabase

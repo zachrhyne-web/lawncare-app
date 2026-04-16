@@ -4,6 +4,7 @@ import {
   fetchProfile, saveProfile,
   fetchCustomers, createCustomer, updateCustomerRow, deleteCustomerRow,
   fetchInvoices, createInvoice, updateInvoiceRow, deleteInvoiceRow,
+  fetchExpenses, createExpense, updateExpenseRow, deleteExpenseRow,
   uploadCustomerPhoto, deleteCustomerPhoto,
   nextInvoiceNumber as dbNextInvoiceNumber,
   uploadLogo,
@@ -39,6 +40,7 @@ export function AppProvider({ children }) {
 
   const [customers, setCustomers] = useState([])
   const [invoices,  setInvoices]  = useState([])
+  const [expenses,  setExpenses]  = useState([])
   const [settings,  setSettings]  = useState(DEFAULT_SETTINGS)
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
@@ -47,16 +49,17 @@ export function AppProvider({ children }) {
   useEffect(() => {
     let cancelled = false
     if (!userId) {
-      setCustomers([]); setInvoices([]); setSettings(DEFAULT_SETTINGS); setLoading(false)
+      setCustomers([]); setInvoices([]); setExpenses([]); setSettings(DEFAULT_SETTINGS); setLoading(false)
       return
     }
     setLoading(true); setError(null)
-    Promise.all([fetchProfile(userId), fetchCustomers(userId), fetchInvoices(userId)])
-      .then(([profile, cust, inv]) => {
+    Promise.all([fetchProfile(userId), fetchCustomers(userId), fetchInvoices(userId), fetchExpenses(userId)])
+      .then(([profile, cust, inv, exp]) => {
         if (cancelled) return
         setSettings({ ...DEFAULT_SETTINGS, ...profile })
         setCustomers(cust)
         setInvoices(inv)
+        setExpenses(exp)
       })
       .catch((e) => { if (!cancelled) setError(e.message || String(e)) })
       .finally(() => { if (!cancelled) setLoading(false) })
@@ -116,6 +119,24 @@ export function AppProvider({ children }) {
     setInvoices(prev => prev.filter(i => i.id !== id))
   }, [])
 
+  // ── Expenses ───────────────────────────────────────────────────────────────
+  const addExpense = useCallback(async (data) => {
+    const created = await createExpense(userId, data)
+    setExpenses(prev => [created, ...prev])
+    return created
+  }, [userId])
+
+  const updateExpense = useCallback(async (expense) => {
+    const updated = await updateExpenseRow(userId, expense)
+    setExpenses(prev => prev.map(e => e.id === updated.id ? updated : e))
+    return updated
+  }, [userId])
+
+  const deleteExpense = useCallback(async (id) => {
+    await deleteExpenseRow(id)
+    setExpenses(prev => prev.filter(e => e.id !== id))
+  }, [])
+
   const getNextInvoiceNumber = useCallback(async () => {
     const num = await dbNextInvoiceNumber(userId)
     setSettings(prev => ({ ...prev, nextInvoiceNumber: (prev.nextInvoiceNumber || 1) + 1 }))
@@ -142,6 +163,7 @@ export function AppProvider({ children }) {
       customers, addCustomer, updateCustomer, deleteCustomer,
       addCustomerPhoto, removeCustomerPhoto,
       invoices,  addInvoice,  updateInvoice,  deleteInvoice, getNextInvoiceNumber,
+      expenses,  addExpense,  updateExpense,  deleteExpense,
       settings,  saveSettings, uploadBrandLogo,
     }}>
       {children}

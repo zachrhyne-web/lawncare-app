@@ -10,11 +10,11 @@ const EMPTY_CUSTOMER = {
   email: '',
   address: '',
   notes: '',
-  services: { mow: false, weedeat: false, edge: false, blowing: false },
+  services: { mow: false, weedeat: false, edge: false, blowing: false, hedge: false },
   equipment: { mowerModel: '', type: '', deckWidth: '', cutHeight: '' },
   jobDetails: {
     estimatedTime: '',
-    servicePrices: { mow: '', weedeat: '', edge: '', blowing: '' },
+    servicePrices: { mow: '', weedeat: '', edge: '', blowing: '', hedge: '' },
   },
 }
 
@@ -116,6 +116,7 @@ export default function NewCustomer() {
               { key: 'weedeat',  label: 'Weed Eat',          desc: 'Weed eating / string trimming' },
               { key: 'edge',     label: 'Edge',              desc: 'Sidewalk & driveway edging' },
               { key: 'blowing',  label: 'Leaf/Grass Blowing', desc: 'Blow off hard surfaces' },
+              { key: 'hedge',    label: 'Hedge Trimming',    desc: 'Shrub & hedge shaping' },
             ].map(({ key, label, desc }) => (
               <div key={key}
                 className={`flex items-center gap-4 p-3 rounded-xl border-2 transition-colors ${

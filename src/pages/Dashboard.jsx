@@ -5,7 +5,7 @@ import { formatCurrency, formatShortDate } from '../utils/invoiceHelpers'
 import { Plus, Users, ChevronRight } from 'lucide-react'
 
 export default function Dashboard() {
-  const { customers, invoices, settings } = useApp()
+  const { customers, invoices, expenses, settings } = useApp()
 
   const now = new Date()
   const thisMonth = (iso) => {
@@ -16,6 +16,8 @@ export default function Dashboard() {
   const invoicesThisMonth = invoices.filter(inv => thisMonth(inv.date))
   const revenueThisMonth  = invoicesThisMonth.filter(i => i.status === 'paid').reduce((s, i) => s + (i.total || 0), 0)
   const outstanding       = invoices.filter(i => i.status !== 'paid').reduce((s, i) => s + (i.total || 0), 0)
+  const expensesThisMonth = expenses.filter(e => thisMonth(e.date)).reduce((s, e) => s + (e.amount || 0), 0)
+  const profitThisMonth   = revenueThisMonth - expensesThisMonth
 
   const recentCustomers = [...customers].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5)
   const recentInvoices  = [...invoices].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
@@ -33,11 +35,16 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <StatCard label="Total Customers"      value={customers.length} />
         <StatCard label="Invoices This Month"  value={invoicesThisMonth.length} />
         <StatCard label="Revenue This Month"   value={formatCurrency(revenueThisMonth)} accent />
         <StatCard label="Outstanding Balance"  value={formatCurrency(outstanding)} sub={`${invoices.filter(i => i.status !== 'paid').length} unpaid`} />
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <StatCard label="Expenses This Month"  value={formatCurrency(expensesThisMonth)} />
+        <StatCard label="Profit This Month"    value={formatCurrency(profitThisMonth)}
+          sub={profitThisMonth >= 0 ? 'in the green' : 'operating at a loss'} />
       </div>
 
       {/* Quick actions */}

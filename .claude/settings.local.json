@@ -11,7 +11,8 @@
       "Bash(curl -s http://localhost:5173/)",
       "Bash(npx tailwindcss:*)",
       "Bash(./node_modules/.bin/tailwindcss init:*)",
-      "Bash(node node_modules/tailwindcss/lib/cli.js init -p)"
+      "Bash(node node_modules/tailwindcss/lib/cli.js init -p)",
+      "Bash(taskkill //F //IM node.exe)"
     ]
   }
 }

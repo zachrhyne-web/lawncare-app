@@ -196,6 +196,7 @@ export default function CustomerDetail() {
                   { key: 'weedeat', label: 'Weed Eat' },
                   { key: 'edge', label: 'Edge' },
                   { key: 'blowing', label: 'Leaf/Grass Blowing' },
+                  { key: 'hedge', label: 'Hedge Trimming' },
                 ].map(({ key, label }) => (
                   <div key={key} className={`flex items-center gap-4 p-3 rounded-xl border-2 transition-colors ${
                     form.services?.[key] ? 'border-lime bg-lime/5' : 'border-gray-100'
@@ -223,6 +224,7 @@ export default function CustomerDetail() {
                   { key: 'weedeat', label: 'Weed Eat' },
                   { key: 'edge', label: 'Edge' },
                   { key: 'blowing', label: 'Leaf/Grass Blowing' },
+                  { key: 'hedge', label: 'Hedge Trimming' },
                 ].map(({ key, label }) => {
                   const active = customer.services?.[key]
                   const price = customer.jobDetails?.servicePrices?.[key]

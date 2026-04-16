@@ -6,6 +6,7 @@ const SERVICE_LABELS = {
   weedeat: { label: 'Weed Eat', cls: 'badge-weedeat' },
   edge:    { label: 'Edge',    cls: 'badge-edge' },
   blowing: { label: 'Blowing', cls: 'badge-blowing' },
+  hedge:   { label: 'Hedge',   cls: 'badge-hedge' },
 }
 
 export default function CustomerCard({ customer }) {

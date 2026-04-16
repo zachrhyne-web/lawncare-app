@@ -7,9 +7,11 @@ import Customers from './pages/Customers'
 import NewCustomer from './pages/NewCustomer'
 import CustomerDetail from './pages/CustomerDetail'
 import Invoices from './pages/Invoices'
+import Expenses from './pages/Expenses'
 import NewInvoice from './pages/NewInvoice'
 import InvoiceDetail from './pages/InvoiceDetail'
 import Settings from './pages/Settings'
+import Account from './pages/Account'
 import SetupWizard from './pages/SetupWizard'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -43,7 +45,9 @@ function AuthedApp() {
           <Route path="/invoices"      element={<Invoices />} />
           <Route path="/invoices/new"  element={<NewInvoice />} />
           <Route path="/invoices/:id"  element={<InvoiceDetail />} />
+          <Route path="/expenses"      element={<Expenses />} />
           <Route path="/settings"      element={<Settings />} />
+          <Route path="/account"       element={<Account />} />
           <Route path="*"              element={<Navigate to="/" replace />} />
         </Routes>
       </main>

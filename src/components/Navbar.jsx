@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, FileText, Settings, Leaf, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, Receipt, Settings, Leaf, LogOut } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -7,6 +7,7 @@ const links = [
   { to: '/',          label: 'Dashboard', icon: LayoutDashboard },
   { to: '/customers', label: 'Customers', icon: Users },
   { to: '/invoices',  label: 'Invoices',  icon: FileText },
+  { to: '/expenses',  label: 'Expenses',  icon: Receipt },
   { to: '/settings',  label: 'Settings',  icon: Settings },
 ]
 
