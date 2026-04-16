@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { ArrowLeft, Save, User, Wrench, Clock, DollarSign } from 'lucide-react'
+import { SERVICES, FREQUENCIES } from '../utils/services'
 
 const EMPTY_CUSTOMER = {
   name: '',
@@ -14,7 +15,8 @@ const EMPTY_CUSTOMER = {
   equipment: { mowerModel: '', type: '', deckWidth: '', cutHeight: '' },
   jobDetails: {
     estimatedTime: '',
-    servicePrices: { mow: '', weedeat: '', edge: '', blowing: '', hedge: '' },
+    servicePrices:      { mow: '',        weedeat: '',       edge: '',       blowing: '',       hedge: '' },
+    serviceFrequencies: { mow: 'weekly',  weedeat: 'weekly', edge: 'weekly', blowing: 'weekly', hedge: 'monthly' },
   },
 }
 
@@ -109,29 +111,28 @@ export default function NewCustomer() {
         {/* ── Services ───────────────────────────────────────────────── */}
         <div className="card">
           <SectionHeader icon={DollarSign} title="Services & Pricing" />
-          <p className="text-xs text-gray-400 mb-4">Check each service performed and set a price per visit.</p>
+          <p className="text-xs text-gray-400 mb-4">Check each service, set a price per visit, and choose how often.</p>
           <div className="space-y-3">
-            {[
-              { key: 'mow',      label: 'Mow',               desc: 'Standard lawn mowing' },
-              { key: 'weedeat',  label: 'Weed Eat',          desc: 'Weed eating / string trimming' },
-              { key: 'edge',     label: 'Edge',              desc: 'Sidewalk & driveway edging' },
-              { key: 'blowing',  label: 'Leaf/Grass Blowing', desc: 'Blow off hard surfaces' },
-              { key: 'hedge',    label: 'Hedge Trimming',    desc: 'Shrub & hedge shaping' },
-            ].map(({ key, label, desc }) => (
+            {SERVICES.map(({ key, label }) => (
               <div key={key}
-                className={`flex items-center gap-4 p-3 rounded-xl border-2 transition-colors ${
+                className={`flex flex-wrap items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
                   form.services[key] ? 'border-lime bg-lime/5' : 'border-gray-100 bg-gray-50'
                 }`}
               >
-                <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                <label className="flex items-center gap-3 flex-1 min-w-[150px] cursor-pointer">
                   <input type="checkbox" className="w-4 h-4 accent-lime rounded"
                     checked={form.services[key]}
                     onChange={e => set(`services.${key}`, e.target.checked)} />
-                  <div>
-                    <p className="font-semibold text-sm text-gray-900">{label}</p>
-                    <p className="text-xs text-gray-400">{desc}</p>
-                  </div>
+                  <span className="font-semibold text-sm text-gray-900">{label}</span>
                 </label>
+                <select
+                  disabled={!form.services[key]}
+                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white disabled:bg-gray-50 disabled:text-gray-300 focus:outline-none focus:ring-2 focus:ring-lime"
+                  value={form.jobDetails.serviceFrequencies?.[key] || 'weekly'}
+                  onChange={e => set(`jobDetails.serviceFrequencies.${key}`, e.target.value)}
+                >
+                  {FREQUENCIES.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+                </select>
                 <div className="flex items-center gap-1.5">
                   <span className="text-gray-400 text-sm">$</span>
                   <input

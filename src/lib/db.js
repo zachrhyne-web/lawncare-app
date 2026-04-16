@@ -237,6 +237,8 @@ const expenseFromRow = (r) => r && ({
   amount: Number(r.amount || 0),
   description: r.description || '',
   notes: r.notes || '',
+  receiptUrl: r.receipt_url || null,
+  receiptPath: r.receipt_path || null,
   createdAt: r.created_at,
 })
 
@@ -248,6 +250,8 @@ const expenseToRow = (e, userId) => ({
   amount: Number(e.amount || 0),
   description: e.description || null,
   notes: e.notes || null,
+  receipt_url: e.receiptUrl || null,
+  receipt_path: e.receiptPath || null,
 })
 
 export async function fetchExpenses(userId) {
@@ -274,6 +278,30 @@ export async function updateExpenseRow(userId, expense) {
 export async function deleteExpenseRow(id) {
   const { error } = await supabase.from('expenses').delete().eq('id', id)
   if (error) throw error
+}
+
+export async function uploadExpenseReceipt(userId, expenseId, file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const path = `${userId}/${expenseId}-${Date.now()}.${ext}`
+  const { error: upErr } = await supabase.storage.from('receipts').upload(path, file, { upsert: true })
+  if (upErr) throw upErr
+  const { data: pub } = supabase.storage.from('receipts').getPublicUrl(path)
+  const { data: row, error } = await supabase.from('expenses')
+    .update({ receipt_url: pub.publicUrl, receipt_path: path })
+    .eq('id', expenseId).select().single()
+  if (error) throw error
+  return expenseFromRow(row)
+}
+
+export async function deleteExpenseReceipt(expenseId, receiptPath) {
+  if (receiptPath) {
+    await supabase.storage.from('receipts').remove([receiptPath])
+  }
+  const { data: row, error } = await supabase.from('expenses')
+    .update({ receipt_url: null, receipt_path: null })
+    .eq('id', expenseId).select().single()
+  if (error) throw error
+  return expenseFromRow(row)
 }
 
 // Atomically consume & increment the invoice counter on the profile

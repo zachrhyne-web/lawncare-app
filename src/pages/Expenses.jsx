@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { Plus, Trash2, Receipt, Edit2, Save, X } from 'lucide-react'
+import { Plus, Trash2, Receipt, Edit2, Save, X, Paperclip, ExternalLink } from 'lucide-react'
 import { formatCurrency, formatShortDate } from '../utils/invoiceHelpers'
 
 const CATEGORIES = ['Fuel', 'Equipment', 'Maintenance', 'Supplies', 'Insurance', 'Software', 'Vehicle', 'Other']
@@ -15,7 +15,7 @@ const emptyExpense = () => ({
 })
 
 export default function Expenses() {
-  const { expenses, addExpense, updateExpense, deleteExpense } = useApp()
+  const { expenses, addExpense, updateExpense, deleteExpense, addExpenseReceipt, removeExpenseReceipt } = useApp()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(emptyExpense())
   const [editingId, setEditingId] = useState(null)
@@ -63,6 +63,18 @@ export default function Expenses() {
     if (!confirm('Delete this expense? This cannot be undone.')) return
     try { await deleteExpense(id) }
     catch (err) { alert(`Could not delete: ${err.message || err}`) }
+  }
+
+  const handleReceiptUpload = async (expense, file) => {
+    if (!file) return
+    try { await addExpenseReceipt(expense.id, file) }
+    catch (err) { alert(`Could not upload receipt: ${err.message || err}`) }
+  }
+
+  const handleReceiptRemove = async (expense) => {
+    if (!confirm('Remove this receipt?')) return
+    try { await removeExpenseReceipt(expense) }
+    catch (err) { alert(`Could not remove receipt: ${err.message || err}`) }
   }
 
   // Filtering + stats
@@ -192,7 +204,9 @@ export default function Expenses() {
         </div>
       ) : (
         <div className="card divide-y divide-gray-100 p-0">
-          {filtered.map(exp => (
+          {filtered.map(exp => {
+            const isImage = exp.receiptUrl && /\.(jpe?g|png|gif|webp)$/i.test(exp.receiptPath || exp.receiptUrl)
+            return (
             <div key={exp.id} className="flex items-center gap-4 px-4 py-3 hover:bg-linen transition-colors">
               <div className="flex-shrink-0 w-20 text-xs text-gray-400">{formatShortDate(exp.date)}</div>
               <div className="flex-1 min-w-0">
@@ -203,6 +217,31 @@ export default function Expenses() {
                   {[exp.category, exp.vendor].filter(Boolean).join(' · ')}
                 </p>
               </div>
+              {exp.receiptUrl ? (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <a href={exp.receiptUrl} target="_blank" rel="noreferrer" title="View receipt"
+                    className="flex items-center gap-1 text-xs text-forest hover:underline">
+                    {isImage ? (
+                      <img src={exp.receiptUrl} alt="Receipt" className="w-10 h-10 object-cover rounded border border-gray-200" />
+                    ) : (
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-forest/10 text-forest">
+                        <Paperclip className="w-3.5 h-3.5" /> Receipt <ExternalLink className="w-3 h-3" />
+                      </span>
+                    )}
+                  </a>
+                  <button onClick={() => handleReceiptRemove(exp)} title="Remove receipt"
+                    className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label title="Attach receipt"
+                  className="flex-shrink-0 cursor-pointer p-2 text-gray-300 hover:text-forest hover:bg-forest/10 rounded-lg transition-colors">
+                  <Paperclip className="w-3.5 h-3.5" />
+                  <input type="file" accept="image/*,application/pdf" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; handleReceiptUpload(exp, f) }} />
+                </label>
+              )}
               <div className="text-sm font-semibold text-forest flex-shrink-0">
                 {formatCurrency(exp.amount)}
               </div>
@@ -215,7 +254,7 @@ export default function Expenses() {
                 </button>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>

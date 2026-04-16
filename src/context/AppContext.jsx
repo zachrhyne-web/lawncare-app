@@ -5,6 +5,7 @@ import {
   fetchCustomers, createCustomer, updateCustomerRow, deleteCustomerRow,
   fetchInvoices, createInvoice, updateInvoiceRow, deleteInvoiceRow,
   fetchExpenses, createExpense, updateExpenseRow, deleteExpenseRow,
+  uploadExpenseReceipt, deleteExpenseReceipt,
   uploadCustomerPhoto, deleteCustomerPhoto,
   nextInvoiceNumber as dbNextInvoiceNumber,
   uploadLogo,
@@ -137,6 +138,18 @@ export function AppProvider({ children }) {
     setExpenses(prev => prev.filter(e => e.id !== id))
   }, [])
 
+  const addExpenseReceipt = useCallback(async (expenseId, file) => {
+    const updated = await uploadExpenseReceipt(userId, expenseId, file)
+    setExpenses(prev => prev.map(e => e.id === expenseId ? { ...e, ...updated } : e))
+    return updated
+  }, [userId])
+
+  const removeExpenseReceipt = useCallback(async (expense) => {
+    const updated = await deleteExpenseReceipt(expense.id, expense.receiptPath)
+    setExpenses(prev => prev.map(e => e.id === expense.id ? { ...e, ...updated } : e))
+    return updated
+  }, [])
+
   const getNextInvoiceNumber = useCallback(async () => {
     const num = await dbNextInvoiceNumber(userId)
     setSettings(prev => ({ ...prev, nextInvoiceNumber: (prev.nextInvoiceNumber || 1) + 1 }))
@@ -163,7 +176,7 @@ export function AppProvider({ children }) {
       customers, addCustomer, updateCustomer, deleteCustomer,
       addCustomerPhoto, removeCustomerPhoto,
       invoices,  addInvoice,  updateInvoice,  deleteInvoice, getNextInvoiceNumber,
-      expenses,  addExpense,  updateExpense,  deleteExpense,
+      expenses,  addExpense,  updateExpense,  deleteExpense, addExpenseReceipt, removeExpenseReceipt,
       settings,  saveSettings, uploadBrandLogo,
     }}>
       {children}

@@ -8,6 +8,7 @@ import {
   Phone, Mail, MapPin, Clock, Wrench, CheckSquare, FileText
 } from 'lucide-react'
 import { formatCurrency, formatShortDate } from '../utils/invoiceHelpers'
+import { SERVICES, FREQUENCIES, frequencyLabel } from '../utils/services'
 
 export default function CustomerDetail() {
   const { id } = useParams()
@@ -191,26 +192,29 @@ export default function CustomerDetail() {
             <SectionHeader icon={CheckSquare} title="Services & Pricing" />
             {editing ? (
               <div className="space-y-3">
-                {[
-                  { key: 'mow', label: 'Mow' },
-                  { key: 'weedeat', label: 'Weed Eat' },
-                  { key: 'edge', label: 'Edge' },
-                  { key: 'blowing', label: 'Leaf/Grass Blowing' },
-                  { key: 'hedge', label: 'Hedge Trimming' },
-                ].map(({ key, label }) => (
-                  <div key={key} className={`flex items-center gap-4 p-3 rounded-xl border-2 transition-colors ${
+                {SERVICES.map(({ key, label }) => (
+                  <div key={key} className={`flex flex-wrap items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
                     form.services?.[key] ? 'border-lime bg-lime/5' : 'border-gray-100'
                   }`}>
-                    <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                    <label className="flex items-center gap-3 flex-1 min-w-[150px] cursor-pointer">
                       <input type="checkbox" className="w-4 h-4 accent-lime"
                         checked={form.services?.[key] || false}
                         onChange={e => set(`services.${key}`, e.target.checked)} />
                       <span className="font-semibold text-sm">{label}</span>
                     </label>
+                    <select
+                      disabled={!form.services?.[key]}
+                      className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white disabled:bg-gray-50 disabled:text-gray-300 focus:outline-none focus:ring-2 focus:ring-lime"
+                      value={form.jobDetails?.serviceFrequencies?.[key] || 'weekly'}
+                      onChange={e => set(`jobDetails.serviceFrequencies.${key}`, e.target.value)}
+                    >
+                      {FREQUENCIES.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+                    </select>
                     <div className="flex items-center gap-1">
                       <span className="text-gray-400 text-sm">$</span>
                       <input type="number" min="0" step="0.01"
-                        className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-lime"
+                        className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-lime disabled:bg-gray-50"
+                        disabled={!form.services?.[key]}
                         value={form.jobDetails?.servicePrices?.[key] || ''}
                         onChange={e => set(`jobDetails.servicePrices.${key}`, e.target.value)} />
                     </div>
@@ -219,15 +223,10 @@ export default function CustomerDetail() {
               </div>
             ) : (
               <div className="space-y-2">
-                {[
-                  { key: 'mow', label: 'Mow' },
-                  { key: 'weedeat', label: 'Weed Eat' },
-                  { key: 'edge', label: 'Edge' },
-                  { key: 'blowing', label: 'Leaf/Grass Blowing' },
-                  { key: 'hedge', label: 'Hedge Trimming' },
-                ].map(({ key, label }) => {
+                {SERVICES.map(({ key, label }) => {
                   const active = customer.services?.[key]
                   const price = customer.jobDetails?.servicePrices?.[key]
+                  const freq = customer.jobDetails?.serviceFrequencies?.[key]
                   return (
                     <div key={key} className={`flex items-center justify-between p-3 rounded-xl ${
                       active ? 'bg-lime/10' : 'bg-gray-50'
@@ -235,6 +234,11 @@ export default function CustomerDetail() {
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${active ? 'bg-lime' : 'bg-gray-300'}`} />
                         <span className={`text-sm font-medium ${active ? 'text-forest' : 'text-gray-400'}`}>{label}</span>
+                        {active && freq && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-white text-forest border border-lime/40">
+                            {frequencyLabel(freq)}
+                          </span>
+                        )}
                       </div>
                       {active && price ? (
                         <span className="text-sm font-semibold text-forest">{formatCurrency(Number(price))}</span>
