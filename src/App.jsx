@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider, useApp } from './context/AppContext'
 import Navbar from './components/Navbar'
+import PoweredByFooter from './components/PoweredByFooter'
 import Dashboard from './pages/Dashboard'
 import Customers from './pages/Customers'
 import NewCustomer from './pages/NewCustomer'
@@ -31,7 +32,7 @@ function AuthedApp() {
   if (loading) return <LoadingScreen label="Loading your portal…" />
   if (error)   return <LoadingScreen label={`Error: ${error}`} />
 
-  if (settings.isSetupComplete === false) return <SetupWizard />
+  if (settings.isSetupComplete === false) return (<><SetupWizard /><PoweredByFooter /></>)
 
   return (
     <div className="min-h-screen bg-linen">
@@ -51,9 +52,7 @@ function AuthedApp() {
           <Route path="*"              element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <footer className="text-center py-6 text-xs text-gray-400 no-print">
-        Powered by <span className="font-display tracking-wider text-forest">BladeTrak</span>
-      </footer>
+      <PoweredByFooter />
     </div>
   )
 }
@@ -61,16 +60,19 @@ function AuthedApp() {
 function AppShell() {
   const { isConfigured, session, loading } = useAuth()
 
-  if (!isConfigured) return <NotConfigured />
+  if (!isConfigured) return (<><NotConfigured /><PoweredByFooter /></>)
   if (loading) return <LoadingScreen />
 
   if (!session) {
     return (
-      <Routes>
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login"  element={<Login />} />
-        <Route path="*"       element={<Login />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login"  element={<Login />} />
+          <Route path="*"       element={<Login />} />
+        </Routes>
+        <PoweredByFooter />
+      </>
     )
   }
 
